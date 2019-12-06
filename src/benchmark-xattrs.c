@@ -44,7 +44,6 @@ static void do_insert(int fd, int i, int j, int flags)
 	int ret;
 
 	snprintf(name, NAME_LEN, NAME_FORMAT, i);
-	/* printf("j = %d; xattr_val_len[j] = %lu.\n", j, xattr_val_len[j]); */
 	ret = fsetxattr(fd, name, value, xattr_val_len[j], flags);
 	if (ret == -1)
 		perror("fsetxattr");
@@ -56,9 +55,7 @@ static void do_delete(int fd, int low, int high, int delete_interval)
 	int i;
 
 	for (i = low; i < high; i += delete_interval) {
-		/* printf("Removing %d.\n", i); */
 		snprintf(name, NAME_LEN, NAME_FORMAT, i);
-		/* printf("Removing xattr %s.\n", name); */
 		ret = fremovexattr(fd, name);
 		if (ret == -1) {
 			perror("fremovexattr");
@@ -118,7 +115,6 @@ static void do_test(void)
 		     i < post_setup_ins_nr_xattrs;
 		     i++, j = (j+1) % nr_xattr_val_len) {
 			idx = i * setup_delete_interval;
-			/* printf("Inserting %d.\n", idx); */
 			do_insert(fd, idx, j, XATTR_CREATE);
 		}
 	}
@@ -132,7 +128,6 @@ static void do_test(void)
 		grp = 0;
 		grp_idx = 1;
 		for (i = 0; i < post_setup_del_nr_xattrs; i++) {
-			/* printf("Deleting %d.\n", (grp * setup_delete_interval) + grp_idx); */
 			snprintf(name, NAME_LEN, NAME_FORMAT,
 				(grp * setup_delete_interval) + grp_idx);
 			ret = fremovexattr(fd, name);
@@ -177,8 +172,6 @@ int main(int argc, char *argv[])
 
 		case 'f':
 			filename = optarg;
-			/* unlink(filename); */
-			/* printf("Got file name as %s.\n", filename); */
 			break;
 
 		case 'l':

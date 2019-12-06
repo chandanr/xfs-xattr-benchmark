@@ -64,8 +64,6 @@ int main(int argc, char *argv[])
 		switch (opt) {
 		case 'f':
 			filename = optarg;
-			/* unlink(filename); */
-			/* printf("Got file name as %s.\n", filename); */
 			break;
 
 		case 'n':

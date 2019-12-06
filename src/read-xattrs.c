@@ -17,9 +17,10 @@
 char name[NAME_LEN];
 unsigned long max_nr_xattrs = 0;
 
-static void usage(void)
+static void usage(const char *prog)
 {
-	fprintf(stderr, "Pass the right arguments please.\n");
+	fprintf(stderr, "%s -n <max-nr-xattrs-to-scan> -f <filename>\n",
+		prog);
 
 	return;
 }
@@ -73,14 +74,14 @@ int main(int argc, char *argv[])
 			break;
 
 		case '?':
-			usage();
+			usage(argv[0]);
 			goto out1;
 			break;
 		}
 	}
 
 	if (!max_nr_xattrs) {
-		usage();
+		usage(argv[0]);
 		goto out1;
 	}
 

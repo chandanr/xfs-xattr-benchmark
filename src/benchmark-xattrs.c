@@ -234,22 +234,11 @@ int main(int argc, char *argv[])
 		usage();
 		goto out1;
 	}
-#if 0
-	if (!((!!nr_xattrs) ^ (!!post_setup_ins_nr_xattrs))) {
-		usage();
-		goto out1;
-	}
 
-	if (!((!!nr_xattrs) ^ (!!post_setup_del_nr_xattrs))) {
-		usage();
-		goto out1;
-	}
-#else
 	if (!nr_xattrs) {
 		usage();
 		goto out1;
 	}
-#endif
 	if (post_setup_ins_nr_xattrs && post_setup_del_nr_xattrs) {
 		usage();
 		goto out1;

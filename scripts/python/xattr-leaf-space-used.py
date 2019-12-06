@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import sys
 import subprocess
 import numpy
@@ -72,13 +74,15 @@ def traverse_xattr_btree(dev, ino, ablock):
         nr_leaves = nr_leaves + 1
     else:
         # something unknown
-        print "Unknown magic =", magic
+        print("Unknown magic =", magic, file=sys.stderr)
         return None
 
 
 if __name__ == '__main__':
     if len(sys.argv) != 4:
-        print "Usage: %s <device name> <inode number> <dump json file>" % sys.argv[0]
+        print("Usage: ", sys.argv[0],
+	      " <device name> <inode number> <dump json file>",
+	      file=sys.stderr)
         sys.exit(1)
 
     dev = sys.argv[1]
@@ -121,4 +125,7 @@ if __name__ == '__main__':
     for i in hash_distribution.values():
         nr_hashes = nr_hashes + i
 
-    print "Number of leaves =", nr_leaves, "Number of hash values =", nr_hashes, "Below average space used =", nr_below_avg, "Average space used =", avg, "Standard deviation =", deviation,  "Minimum =", min, "Maximum =", max
+    print("Number of leaves =", nr_leaves, "Number of hash values =", nr_hashes,
+	  "Below average space used =", nr_below_avg,
+	  "Average space used =", avg, "Standard deviation =", deviation,
+	  "Minimum =", min, "Maximum =", max)

@@ -31,11 +31,12 @@ int inline_overwrite_interval = 0;
 int setup_delete_percent = 0;
 int setup_delete_interval = 0;
 
-static void usage(void)
+static void usage(const char *prog)
 {
-	fprintf(stderr, "Pass the right arguments please.\n");
-
-	return;
+	fprintf(stderr, "Usage: %s [-d inline-del-percent | -o inline-overwrite-percent]"
+		" [-s setup-del-percent] [-D nr-xattrs-post-setup-del | -N nr-xattrs-post-setup-create]"
+		" [-l xattr-size] [-n nr-xattrs-created] -f testfile\n",
+		prog);
 }
 
 static void do_insert(int fd, int i, int j, int flags)
@@ -224,35 +225,36 @@ int main(int argc, char *argv[])
 			break;
 
 		case '?':
-			usage();
+			usage(argv[0]);
 			goto out1;
 			break;
 		}
 	}
 
 	if (!filename) {
-		usage();
+		usage(argv[0]);
 		goto out1;
 	}
 
 	if (!nr_xattrs) {
-		usage();
+		usage(argv[0]);
 		goto out1;
 	}
+
 	if (post_setup_ins_nr_xattrs && post_setup_del_nr_xattrs) {
-		usage();
+		usage(argv[0]);
 		goto out1;
 	}
 
 	if (post_setup_ins_nr_xattrs
 		&& (inline_delete_percent || inline_overwrite_percent)) {
-		usage();
+		usage(argv[0]);
 		goto out1;
 	}
 
 	if (post_setup_del_nr_xattrs
 		&& (inline_delete_percent || inline_overwrite_percent)) {
-		usage();
+		usage(argv[0]);
 		goto out1;
 	}
 

@@ -151,8 +151,8 @@ def exec_benchmark(t, benchmark_exec, log_file):
 		f.write('cpu-usage = ' + timestamp.replace("'",""))
 
 
-def exec_leaf_space_calc(t, leaf_space_calc, log_file, json_file):
-    cmd = [leaf_space_calc] + [device] + ['99'] + [json_file]
+def exec_leaf_space_calc(t, leaf_space_calc, ino, log_file, json_file):
+    cmd = [leaf_space_calc] + [device] + [ino] + [json_file]
 
     with open(log_file, "a+") as f:
         subprocess.check_call(cmd, stdout=f)
@@ -175,10 +175,17 @@ def start_benchmark(benchmark_exec, leaf_space_calc, log_dir, json_dir):
 
 	exec_benchmark(t, benchmark_exec, log_file)
 
+	ostat = os.stat(testfile)
+	s = 'Inode number = {0}\n'.format(ostat.st_ino)
+	print(s)
+	with open(log_file, 'a+') as f:
+		f.write(s)
+
         test_reset()
 
         print 'Calculating leaf space used and hash distribution ...'
-        exec_leaf_space_calc(t, leaf_space_calc, log_file, json_file)
+        exec_leaf_space_calc(t, leaf_space_calc, str(ostat.st_ino),
+			     log_file, json_file)
 
 if __name__ == '__main__':
     if len(sys.argv) != 5:

@@ -138,14 +138,17 @@ def exec_benchmark(t, benchmark_exec, log_file):
 	cmd = [benchmark_exec] + [t[0]]
 	for i in t[1].split():
 		cmd = cmd + ['-l ' + i]
+	if len(t) > 2:
+		cmd = cmd + [t[2]]
 	cmd = cmd + ['-f' + testfile]
-	cmd = ['/usr/bin/time'] + ['-o{0}'.format(time_file)] + ['-f \'%e %U %S\''] + cmd
+	time_cmd = ['/usr/bin/time'] + ['-o{0}'.format(time_file)] + ['-f \'%e %U %S\'']
+	cmd = time_cmd + cmd
 
 	output = subprocess.check_output(cmd)
 
 	with open(time_file, 'r') as f:
 		timestamp = f.read()
-	print(output)
+	print output
 	with open(log_file, 'a+') as f:
 		f.write(output)
 		f.write('cpu-usage = ' + timestamp.replace("'",""))

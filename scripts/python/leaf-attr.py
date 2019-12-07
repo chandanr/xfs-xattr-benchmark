@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import sys
 import os
 import subprocess
@@ -135,7 +137,7 @@ def exec_benchmark(t, benchmark_exec, log_file):
 
 	with open(time_file, 'r') as f:
 		timestamp = f.read()
-	print output
+	print(output)
 	with open(log_file, 'a+') as f:
 		f.write(output)
 		f.write('cpu-usage = ' + timestamp.replace("'",""))
@@ -173,13 +175,14 @@ def start_benchmark(benchmark_exec, leaf_space_calc, log_dir, json_dir):
 
         test_reset()
 
-        print 'Calculating leaf space used and hash distribution ...'
+        print('Calculating leaf space used and hash distribution ...\n')
         exec_leaf_space_calc(t, leaf_space_calc, str(ostat.st_ino),
 			     log_file, json_file)
 
 if __name__ == '__main__':
     if len(sys.argv) != 5:
-        print 'Usage %s <benchmark executable> <leaf-space-calculator> <log dir> <json dir>' % sys.argv[0]
+        print('Usage ', sys.argv[0],
+	      ' <benchmark executable> <leaf-space-calculator> <log dir> <json dir>')
         sys.exit(1)
 
     start_benchmark(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])

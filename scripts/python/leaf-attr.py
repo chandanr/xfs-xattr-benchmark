@@ -151,17 +151,12 @@ def exec_leaf_space_calc(t, leaf_space_calc, ino, log_file, json_file):
 
 def start_benchmark(benchmark_exec, leaf_space_calc, log_dir, json_dir):
     for t in test_cmd_line:
-        log_file = 'test' + t[0].replace(' ','') + '-' + t[1].replace(' ','-')
+	ftemplate = 'test' + t[0].replace(' ','') + '-' + t[1].replace(' ','-')
         if len(t) > 2:
-            log_file = log_file + t[2].replace(' ','')
-        log_file = log_file + '.log'
-        log_file = log_dir + '/' + log_file
+            ftemplate = ftemplate + t[2].replace(' ','')
 
-        json_file = 'test' + t[0].replace(' ','') + '-' + t[1].replace(' ','-')
-        if len(t) > 2:
-            json_file = json_file + t[2].replace(' ','')
-        json_file = json_file + '.json'
-        json_file = json_dir + '/' + json_file
+        log_file = log_dir + '/' + ftemplate + '.log'
+	json_file = json_dir + '/' + ftemplate + '.json'
 
         test_setup()
 

@@ -31,19 +31,19 @@ test_cmd_line = [
 ]
 
 def test_setup():
-    try:
-        subprocess.check_call(['umount', device],
-                              stdout=devnull, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError:
-        pass
+	try:
+		subprocess.check_call(['umount', device],
+				      stdout=devnull, stderr=subprocess.STDOUT)
+	except subprocess.CalledProcessError:
+		pass
 
-    subprocess.check_call(['mkfs.xfs', '-f', device],
-                          stdout=devnull, stderr=subprocess.STDOUT)
-    subprocess.check_call(['mount', device, mntpnt],
-                          stdout=devnull, stderr=subprocess.STDOUT)
+	subprocess.check_call(['mkfs.xfs', '-f', device],
+                              stdout=devnull, stderr=subprocess.STDOUT)
+	subprocess.check_call(['mount', device, mntpnt],
+                              stdout=devnull, stderr=subprocess.STDOUT)
 
 def test_reset():
-    subprocess.check_call(['umount', device])
+	subprocess.check_call(['umount', device])
 
 def exec_benchmark(t, benchmark_exec, log_file):
 	time_file = '/tmp/time.log'
@@ -80,10 +80,10 @@ def exec_benchmark(t, benchmark_exec, log_file):
 		f.write('cpu-usage = ' + timestamp.replace("'",""))
 
 def exec_leaf_space_calc(t, leaf_space_calc, ino, log_file, json_file):
-    cmd = [leaf_space_calc] + [device] + [ino] + [json_file]
+	cmd = [leaf_space_calc] + [device] + [ino] + [json_file]
 
-    with open(log_file, "a+") as f:
-        subprocess.check_call(cmd, stdout=f)
+	with open(log_file, "a+") as f:
+		subprocess.check_call(cmd, stdout=f)
 
 def start_benchmark(benchmark_exec, leaf_space_calc, log_dir, json_dir):
 	for t in test_cmd_line:

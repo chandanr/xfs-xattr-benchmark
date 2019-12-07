@@ -119,19 +119,6 @@ def test_setup():
 def test_reset():
     subprocess.check_call(['umount', device])
 
-# def exec_benchmark(t, benchmark_exec, log_file):
-#     cmd = [benchmark_exec] + [t[0]]
-#     for i in t[1].split():
-#        cmd = cmd + ['-l ' + i]
-#     if len(t) > 2:
-#         cmd = cmd + [t[2]]
-#     cmd = cmd + ['-f' + testfile]
-
-#     output = subprocess.check_output(cmd)
-#     print output
-#     with open(log_file, "w+") as f:
-#         f.write(output)
-
 def exec_benchmark(t, benchmark_exec, log_file):
 	time_file = '/tmp/time.log'
 

@@ -177,8 +177,8 @@ def start_benchmark(benchmark_exec, leaf_space_calc, log_dir, json_dir):
 
         test_reset()
 
-        # print 'Calculating leaf space used and hash distribution ...'
-        # exec_leaf_space_calc(t, leaf_space_calc, log_file, json_file)
+        print 'Calculating leaf space used and hash distribution ...'
+        exec_leaf_space_calc(t, leaf_space_calc, log_file, json_file)
 
 if __name__ == '__main__':
     if len(sys.argv) != 5:

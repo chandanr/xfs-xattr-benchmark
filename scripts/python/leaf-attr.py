@@ -173,9 +173,6 @@ def start_benchmark(benchmark_exec, leaf_space_calc, log_dir, json_dir):
 
         test_setup()
 
-	with open('/proc/sys/vm/drop_caches', 'w') as f:
-		f.write('3')
-
 	exec_benchmark(t, benchmark_exec, log_file)
 
         test_reset()

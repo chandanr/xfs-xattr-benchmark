@@ -8,7 +8,8 @@ import threading
 import numpy
 import json
 
-nr_threads = 20
+nr_threads = 0
+grp_size = 3
 
 leaf_used_bytes = {}
 hash_distribution = {}
@@ -99,11 +100,14 @@ def thread_main(tid, grp_start, grp_size, dev, ino):
 	
 
 def split_root_node(dev, ino):
+	global total_nr_leaves
+	global nr_threads
+	global grp_size
+
 	xfs_db_cmd_ablock = xfs_db_cmd_inode + ["-c", "ablock %s" % (0)]
 	xfs_db_cmd_ablock_magic = xfs_db_cmd_ablock + ["-c", "print hdr.info.hdr.magic"]
 	xfs_db_cmd_ablock_count = xfs_db_cmd_ablock + ["-c", "print hdr.count"]
 	threads = []
-	global total_nr_leaves
     
 	output = subprocess.check_output(xfs_db_cmd_ablock_magic)
 	magic = output.split('=')[1].strip()	
@@ -115,12 +119,12 @@ def split_root_node(dev, ino):
 	nr_entries = output.split('=')[1].strip()
 	nr_entries = int(nr_entries)
 
-	if nr_entries < nr_threads:
-		print('Number of threads is too high: nr_entries = ',
-		      nr_entries, ' nr_threads = ', nr_threads, '\n')
-		sys.exit(1)
+	nr_threads = nr_entries / grp_size
+	rem = nr_entries % grp_size
+	if rem:
+		nr_threads = nr_threads + 1
 
-	grp_size = nr_entries / nr_threads
+	print('nr_entries = ', nr_entries, '; nr_threads = ', nr_threads, '\n')
 
 	s = ''
 	for tid in xrange(0, nr_threads):
@@ -131,8 +135,8 @@ def split_root_node(dev, ino):
 		
 		grp_start = tid * grp_size
 
-		if tid == (nr_threads - 1):
-			grp_size = grp_size + (nr_entries % nr_threads)
+		if rem and tid == (nr_threads - 1):
+			grp_size = nr_entries % grp_size
 
 		tobj = threading.Thread(target=thread_main,
 					args=(tid, grp_start, grp_size,
@@ -141,7 +145,7 @@ def split_root_node(dev, ino):
 		tobj.start()
 
 		grp_end = grp_start + grp_size - 1
-		output = 'Thread id = {0} grp_start = {1} \tgrp_end = {2}\n'.format(tid, grp_start, grp_end)
+		output = 'Thread id = {0} \tgrp_size = {1} \t grp_start = {2} \tgrp_end = {3}\n'.format(tid, grp_size, grp_start, grp_end)
 		s = s + output
 
 	print(s)

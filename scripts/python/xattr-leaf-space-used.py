@@ -9,12 +9,12 @@ import numpy
 import json
 
 nr_threads = 0
-grp_size = 3
+grp_size = 250
 
-leaf_used_bytes = {}
-hash_distribution = {}
-xattrs_per_hash = {}
-nr_leaves = {}
+leaf_used_bytes = {}		# leaf_used_bytes[tid][leaf_idx]
+hash_distribution = {}		# check this later
+xattrs_per_hash = {}		# check this later
+nr_leaves = {}			# nr_leaves[tid] i.e. number of leaves encountered by a thread.
 
 total_leaf_used_bytes = {}
 total_hash_distribution = {}
@@ -85,8 +85,8 @@ def traverse_xattr_btree(tid, dev, ino, ablock):
 		return None
 
 
-def thread_main(tid, grp_start, grp_size, dev, ino):
-	xfs_db_cmd_ablock = xfs_db_cmd_inode + ["-c", "ablock %s" % (0)]
+def thread_main(tid, grp_start, grp_size, dev, ino, ablock):
+	xfs_db_cmd_ablock = xfs_db_cmd_inode + ["-c", "ablock %s" % (ablock)]
 
 	grp_end = grp_start + grp_size - 1
 
@@ -94,25 +94,33 @@ def thread_main(tid, grp_start, grp_size, dev, ino):
 		xfs_db_cmd_ablock_before = xfs_db_cmd_ablock \
 			+ ["-c", "print btree[%d].before" % i]
 		output = subprocess.check_output(xfs_db_cmd_ablock_before)
+		if not '=' in output:
+			print('Output =', output)
+			sys.exit(1)
+
 		child_ablock = output.split('=')[1].strip()
+
+			
 		child_ablock = int(child_ablock)
 		traverse_xattr_btree(tid, dev, ino, child_ablock)
 	
 
-def split_root_node(dev, ino):
-	global total_nr_leaves
-	global nr_threads
-	global grp_size
+def split_child_node(dev, ino, ablock, tid_start):
+	global hash_distribution
+	global xattrs_per_hash
+	global leaf_used_bytes
+	global nr_leaves
 
-	xfs_db_cmd_ablock = xfs_db_cmd_inode + ["-c", "ablock %s" % (0)]
+	cthreads = []
+
+	xfs_db_cmd_ablock = xfs_db_cmd_inode + ["-c", "ablock %s" % ablock]
 	xfs_db_cmd_ablock_magic = xfs_db_cmd_ablock + ["-c", "print hdr.info.hdr.magic"]
 	xfs_db_cmd_ablock_count = xfs_db_cmd_ablock + ["-c", "print hdr.count"]
-	threads = []
     
 	output = subprocess.check_output(xfs_db_cmd_ablock_magic)
 	magic = output.split('=')[1].strip()	
 	if magic != "0x3ebe":  # XFS_DA3_NODE_MAGIC
-		print('Root is not a non-leaf node\n')
+		print('Child is not a non-leaf node\n')
 		sys.exit(1)
 
 	output = subprocess.check_output(xfs_db_cmd_ablock_count)
@@ -124,34 +132,71 @@ def split_root_node(dev, ino):
 	if rem:
 		nr_threads = nr_threads + 1
 
-	print('nr_entries = ', nr_entries, '; nr_threads = ', nr_threads, '\n')
+	# print('nr_entries = ', nr_entries, '; nr_threads = ', nr_threads, '\n')
 
 	s = ''
-	for tid in xrange(0, nr_threads):
-		leaf_used_bytes[tid] = {}
-		hash_distribution[tid] = {}
-		xattrs_per_hash[tid] = {}
-		nr_leaves[tid] = 0
-		
-		grp_start = tid * grp_size
+	grp_start = 0
+	tid_end = tid_start + nr_threads - 1
 
-		if rem and tid == (nr_threads - 1):
-			grp_size = nr_entries % grp_size
+	for tid in xrange(tid_start, tid_end + 1):
+		leaf_used_bytes[tid] = {}
+		hash_distribution[tid] = {} # check this later
+		xattrs_per_hash[tid] = {}   # check this later
+		nr_leaves[tid] = 0
+
+		gs = grp_size
+		if rem and tid == tid_end:
+			gs = rem
 
 		tobj = threading.Thread(target=thread_main,
-					args=(tid, grp_start, grp_size,
-					      dev, ino))
-		threads.append(tobj)
+					args=(tid, grp_start, gs,
+					      dev, ino, ablock))
+		cthreads.append(tobj)
 		tobj.start()
 
-		grp_end = grp_start + grp_size - 1
-		output = 'Thread id = {0} \tgrp_size = {1} \t grp_start = {2} \tgrp_end = {3}\n'.format(tid, grp_size, grp_start, grp_end)
+		grp_end = grp_start + gs - 1
+		# output = 'Thread id = {0} \tgrp_size = {1} \t grp_start = {2} \tgrp_end = {3}\n'.format(tid, gs, grp_start, grp_end)
+		grp_start = grp_end + 1
 		s = s + output
 
-	print(s)
+	# print(s)
+
+	return cthreads
+
+def split_root_node(dev, ino):
+	global total_nr_leaves
+	global nr_threads
+
+	xfs_db_cmd_ablock = xfs_db_cmd_inode + ["-c", "ablock %s" % (0)]
+	xfs_db_cmd_ablock_magic = xfs_db_cmd_ablock + ["-c", "print hdr.info.hdr.magic"]
+	xfs_db_cmd_ablock_count = xfs_db_cmd_ablock + ["-c", "print hdr.count"]
+	threads = []
+
+	output = subprocess.check_output(xfs_db_cmd_ablock_magic)
+	magic = output.split('=')[1].strip()	
+	if magic != "0x3ebe":  # XFS_DA3_NODE_MAGIC
+		print('Root is not a non-leaf node\n')
+		sys.exit(1)
+
+	output = subprocess.check_output(xfs_db_cmd_ablock_count)
+	nr_entries = output.split('=')[1].strip()
+	nr_entries = int(nr_entries)
+
+	tid_start = 0
+	for i in xrange(0, nr_entries):
+		xfs_db_cmd_ablock_before = xfs_db_cmd_ablock \
+			+ ["-c", "print btree[%d].before" % i]
+		output = subprocess.check_output(xfs_db_cmd_ablock_before)
+		child_ablock = output.split('=')[1].strip()
+		child_ablock = int(child_ablock)
+		tlist = split_child_node(dev, ino, child_ablock, tid_start)
+		threads.extend(tlist)
+		tid_start = tid_start + len(tlist)
 
 	for tobj in threads:
 		tobj.join()
+
+	nr_threads = len(threads)
 
 	idx = 0
 	for tid in xrange(0, nr_threads):
@@ -174,7 +219,7 @@ def split_root_node(dev, ino):
 		else:
 			total_xattrs_per_hash[h] = nr_val
 
-
+	
 if __name__ == '__main__':
 	if len(sys.argv) != 4:
 		print("Usage: ", sys.argv[0],

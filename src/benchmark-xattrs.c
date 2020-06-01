@@ -30,6 +30,7 @@ int inline_overwrite_percent = 0;
 int inline_overwrite_interval = 0;
 int setup_delete_percent = 0;
 int setup_delete_interval = 0;
+int rm_xattrs = 0;
 
 static void usage(const char *prog)
 {
@@ -80,7 +81,7 @@ static void do_test(void)
 	int oflags;
 
 	oflags = O_RDWR;
-	if (!post_setup_ins_nr_xattrs && !post_setup_del_nr_xattrs)
+	if (!post_setup_ins_nr_xattrs && !post_setup_del_nr_xattrs && !rm_xattrs)
 		oflags |= O_CREAT | O_EXCL;
 
 	fd = open(filename, oflags, 0666);
@@ -89,7 +90,10 @@ static void do_test(void)
 		return;
 	}
 
-	if (!post_setup_ins_nr_xattrs && !post_setup_del_nr_xattrs) {
+	if (rm_xattrs)
+		do_delete(fd, 0, nr_xattrs, 1);
+
+	if (!post_setup_ins_nr_xattrs && !post_setup_del_nr_xattrs && !rm_xattrs) {
 		for (i = 0, j = 0; i < nr_xattrs; i++, j = (j+1) % nr_xattr_val_len) {
 			do_insert(fd, i, j, XATTR_CREATE);
 
@@ -152,7 +156,7 @@ int main(int argc, char *argv[])
 	int opt;
 	int i;
 
-	while ((opt = getopt(argc, argv, "d:D:f:l:n:N:o:s:")) != -1) {
+	while ((opt = getopt(argc, argv, "d:D:f:l:n:N:o:rs:")) != -1) {
 		switch (opt) {
 		case 'd':
 			inline_delete_percent = strtoul(optarg, NULL, 10);
@@ -202,6 +206,10 @@ int main(int argc, char *argv[])
 				goto out1;
 			inline_overwrite_interval = OVERWRITE_THRESHOLD * inline_overwrite_percent / 100;
 			inline_overwrite_interval = OVERWRITE_THRESHOLD / inline_overwrite_interval;
+			break;
+
+		case 'r':
+			rm_xattrs = 1;
 			break;
 
 		case 's':
@@ -265,6 +273,8 @@ int main(int argc, char *argv[])
 	printf("Inline overwrite interval = %d\n", inline_overwrite_interval);
 	printf("Setup delete percentage = %d\n", setup_delete_percent);
 	printf("Setup delete interval = %d\n", setup_delete_interval);
+	printf("Remove xattrs in range [0, %llu]: %s\n",
+		nr_xattrs - 1, rm_xattrs ? "Yes" : "No");
 
 	value = malloc(max_val);
 	if (!value) {
